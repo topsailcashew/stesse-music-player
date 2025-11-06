@@ -6,16 +6,16 @@ import {
   TbPlayerSkipBack,
 } from 'react-icons/tb';
 import { ButtonGroup, Button } from 'react-bootstrap';
+import { useMusicPlayer } from '../context/MusicPlayerContext';
 
-const PlayerControls = ({
-  // Player state
-  isPlaying,
-
-  // Player actions
-  togglePlay,
-  playNext,
-  playPrevious,
-}) => {
+const PlayerControls = () => {
+  // Get state and actions from Context
+  const {
+    isPlaying,
+    togglePlay,
+    playNext,
+    playPrevious,
+  } = useMusicPlayer();
 
   return (
     <div className="minimal-controls">

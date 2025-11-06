@@ -2,37 +2,18 @@
 
 import React from "react";
 import { Container, Image, Spinner, Alert } from 'react-bootstrap';
+import { useMusicPlayer } from '../context/MusicPlayerContext';
 import PlayerControls from "./PlayerControls";
 import Seeker from "./Seeker";
 
-function PlayerDetails({
-  // Playlist props
-  currentTrack,
-  isShuffled,
-  repeatMode,
-  playlistLoading,
-  playlistError,
-
-  // Playlist actions
-  playNext,
-  playPrevious,
-  toggleShuffle,
-  toggleRepeat,
-
-  // Audio player props
-  isPlaying,
-  currentTime,
-  duration,
-  volume,
-  audioLoading,
-  audioError,
-
-  // Audio player actions
-  togglePlay,
-  seek,
-  changeVolume,
-  formatTime,
-}) {
+function PlayerDetails() {
+  // Get state from Context (only what's needed in this component)
+  const {
+    currentTrack,
+    isPlaying,
+    isLoading,
+    error,
+  } = useMusicPlayer();
 
   // Get album image
   const getAlbumImage = () => {
@@ -45,14 +26,9 @@ function PlayerDetails({
   return (
     <Container fluid className="minimal-player">
       {/* Error messages */}
-      {playlistError && (
+      {error && (
         <Alert variant="danger" className="error-alert">
-          {playlistError}
-        </Alert>
-      )}
-      {audioError && (
-        <Alert variant="warning" className="error-alert">
-          {audioError}
+          {error}
         </Alert>
       )}
 
@@ -61,7 +37,7 @@ function PlayerDetails({
 
         {/* Album Artwork - Centered */}
         <div className="album-container">
-          {playlistLoading ? (
+          {isLoading ? (
             <div className="loading-container">
               <Spinner animation="border" role="status" />
             </div>
@@ -85,26 +61,10 @@ function PlayerDetails({
         )}
 
         {/* Seeker - Bottom Center */}
-        <Seeker
-          currentTime={currentTime}
-          duration={duration}
-          seek={seek}
-          formatTime={formatTime}
-        />
+        <Seeker />
 
         {/* Player Controls - Bottom Center */}
-        <PlayerControls
-          isPlaying={isPlaying}
-          isShuffled={isShuffled}
-          repeatMode={repeatMode}
-          volume={volume}
-          togglePlay={togglePlay}
-          playNext={playNext}
-          playPrevious={playPrevious}
-          toggleShuffle={toggleShuffle}
-          toggleRepeat={toggleRepeat}
-          changeVolume={changeVolume}
-        />
+        <PlayerControls />
       </div>
     </Container>
   );

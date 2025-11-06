@@ -1,0 +1,77 @@
+/* GenreButton - Floating button */
+.genre-button {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  transition: all 200ms ease-out;
+  z-index: 900;
+  color: white;
+}
+
+.genre-button:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+}
+
+.genre-button:active {
+  transform: scale(0.95);
+}
+
+.genre-button:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 4px;
+}
+
+/* Pulse animation on first load */
+.genre-button.pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 4px 24px rgba(102, 126, 234, 0.8),
+                0 0 0 8px rgba(102, 126, 234, 0.2),
+                0 0 0 16px rgba(102, 126, 234, 0.1);
+    transform: scale(1.05);
+  }
+}
+
+/* Mobile: top-right position */
+@media (max-width: 480px) {
+  .genre-button {
+    top: 24px;
+    bottom: auto;
+    right: 24px;
+    width: 48px;
+    height: 48px;
+  }
+}
+
+/* Accessibility: Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .genre-button.pulse {
+    animation: none;
+  }
+
+  .genre-button:hover {
+    transform: none;
+  }
+
+  .genre-button:active {
+    transform: none;
+  }
+}

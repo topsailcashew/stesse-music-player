@@ -1,0 +1,219 @@
+/* GenreModal Backdrop */
+.genre-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+
+  /* Entry animation: fade 0→0.5 opacity (200ms) */
+  animation: fadeIn 200ms ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Modal Container */
+.genre-modal {
+  background: white;
+  border-radius: 16px;
+  max-width: 800px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+
+  /* Entry animation: scale 0.9→1.0 + fade (300ms, spring easing) */
+  animation: scaleIn 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Modal Header */
+.genre-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 28px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.genre-modal-header h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.genre-modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: background-color 150ms ease-out, color 150ms ease-out;
+  width: 40px;
+  height: 40px;
+}
+
+.genre-modal-close:hover {
+  background-color: #f3f4f6;
+  color: #1f2937;
+}
+
+.genre-modal-close:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Genre Grid */
+.genre-grid {
+  display: grid;
+  gap: 16px;
+  padding: 24px 28px;
+
+  /* Desktop: 3 columns */
+  grid-template-columns: repeat(3, 1fr);
+}
+
+/* Genre Card */
+.genre-card {
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 150ms ease-out;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-height: 140px;
+}
+
+/* Hover: scale to 1.05 with shadow increase */
+.genre-card:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  border-color: #3b82f6;
+}
+
+/* Active: slight press effect (scale 0.98) */
+.genre-card:active {
+  transform: scale(0.98);
+}
+
+/* Active/Selected state */
+.genre-card.active {
+  border-color: #3b82f6;
+  background-color: #eff6ff;
+}
+
+/* Focus indicator */
+.genre-card:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+.genre-icon {
+  font-size: 48px;
+  margin-bottom: 8px;
+}
+
+.genre-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+}
+
+.genre-description {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Tablet: 2 columns (768px-480px) */
+@media (max-width: 768px) {
+  .genre-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .genre-card {
+    min-height: 120px;
+    /* Larger touch targets (48px minimum) */
+    min-width: 48px;
+  }
+}
+
+/* Mobile: 1 column (<480px) */
+@media (max-width: 480px) {
+  .genre-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .genre-modal {
+    border-radius: 12px;
+    max-height: 100vh;
+  }
+
+  .genre-modal-header {
+    padding: 20px;
+  }
+
+  .genre-grid {
+    padding: 20px;
+  }
+
+  .genre-card {
+    min-height: 100px;
+  }
+}
+
+/* Accessibility: Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .genre-modal-backdrop,
+  .genre-modal {
+    animation: none;
+  }
+
+  .genre-card:hover {
+    transform: none;
+  }
+
+  .genre-card:active {
+    transform: none;
+  }
+}
+
+/* Color contrast: WCAG AA compliant (4.5:1 minimum) */
+/* Current colors meet this standard */

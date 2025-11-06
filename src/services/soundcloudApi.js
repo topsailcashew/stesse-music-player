@@ -11,6 +11,38 @@
 const SOUNDCLOUD_API_BASE = 'https://api.soundcloud.com';
 const CLIENT_ID = process.env.REACT_APP_SOUNDCLOUD_CLIENT_ID;
 
+// Genre-to-Query Mapping for study/work music
+const GENRE_QUERIES = {
+  'lofi': [
+    'lofi hip hop beats',
+    'chillhop study',
+    'lofi beats to study'
+  ],
+  'classical': [
+    'classical piano study',
+    'peaceful piano',
+    'classical focus music'
+  ],
+  'ambient': [
+    'ambient study music',
+    'ambient electronic focus',
+    'atmospheric concentration'
+  ],
+  'jazz': [
+    'smooth jazz instrumental',
+    'jazz for studying',
+    'bossa nova chill'
+  ],
+  'bass': [
+    'bass boosted study',
+    'deep bass concentration'
+  ],
+  'chill-trap': [
+    'chill trap beats',
+    'melodic trap study'
+  ]
+};
+
 // Fallback: Try to extract client ID from SoundCloud widget (public method)
 let extractedClientId = null;
 
@@ -151,6 +183,66 @@ export const getConcentrationHardRock = async () => {
   } catch (error) {
     console.error('Failed to get concentration hard rock:', error);
     throw error;
+  }
+};
+
+/**
+ * Fetch playlist by genre for study/work music
+ * @param {string} genre - Genre ID (e.g., 'lofi', 'classical')
+ * @returns {Promise<Array>} Array of track objects (top 50)
+ */
+export const fetchPlaylistByGenre = async (genre) => {
+  try {
+    const clientId = await getClientId();
+
+    // If no client ID, fall back to mock data
+    if (!clientId) {
+      console.warn('No SoundCloud client ID found. Using mock data.');
+      // TODO: Remove after SoundCloud API configured
+      const { getMockPlaylistByGenre } = await import('../data/mockPlaylists');
+      return getMockPlaylistByGenre(genre);
+    }
+
+    const queries = GENRE_QUERIES[genre] || GENRE_QUERIES['lofi'];
+    const allTracks = [];
+
+    // Execute parallel searches for each genre's query terms
+    const searchPromises = queries.map(query =>
+      searchSoundCloudTracks(query, '', 20).catch(err => {
+        console.warn(`Failed to fetch "${query}":`, err);
+        return [];
+      })
+    );
+
+    const results = await Promise.all(searchPromises);
+    results.forEach(tracks => allTracks.push(...tracks));
+
+    // Filter out tracks with unavailable streams
+    const validTracks = allTracks.filter(track => track.audioUrl);
+
+    // Remove duplicates by ID
+    const uniqueTracks = Array.from(
+      new Map(validTracks.map(track => [track.id, track])).values()
+    );
+
+    // Sort by play count (popularity)
+    const sortedTracks = uniqueTracks.sort(
+      (a, b) => (b.playbackCount || 0) - (a.playbackCount || 0)
+    );
+
+    // Return top 50 unique tracks
+    return sortedTracks.slice(0, 50);
+
+  } catch (error) {
+    console.error(`Failed to fetch playlist for genre "${genre}":`, error);
+    // Fall back to mock data on error
+    try {
+      const { getMockPlaylistByGenre } = await import('../data/mockPlaylists');
+      return getMockPlaylistByGenre(genre);
+    } catch (fallbackError) {
+      console.error('Mock data fallback failed:', fallbackError);
+      return [];
+    }
   }
 };
 

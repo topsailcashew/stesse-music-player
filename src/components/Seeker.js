@@ -1,7 +1,11 @@
 import React, { useRef, useState } from 'react';
 import { ProgressBar } from 'react-bootstrap';
+import { useMusicPlayer } from '../context/MusicPlayerContext';
 
-const Seeker = ({ currentTime, duration, seek, formatTime }) => {
+const Seeker = () => {
+  // Get state and actions from Context
+  const { currentTime, duration, seek, formatTime } = useMusicPlayer();
+
   const progressBarRef = useRef(null);
   const [isDragging, setIsDragging] = useState(false);
 

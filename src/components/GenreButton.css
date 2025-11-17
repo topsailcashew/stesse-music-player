@@ -1,35 +1,37 @@
 /* GenreButton - Floating button */
 .genre-button {
   position: fixed;
-  bottom: 24px;
-  right: 24px;
-  width: 56px;
-  height: 56px;
+  bottom: 32px;
+  right: 32px;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border: none;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-  transition: all 200ms ease-out;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 900;
   color: white;
 }
 
 .genre-button:hover {
-  transform: scale(1.1);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3);
 }
 
 .genre-button:active {
-  transform: scale(0.95);
+  transform: translateY(0);
 }
 
 .genre-button:focus {
-  outline: 2px solid #3b82f6;
-  outline-offset: 4px;
+  outline: 2px solid rgba(255, 255, 255, 0.4);
+  outline-offset: 3px;
 }
 
 /* Pulse animation on first load */
@@ -39,13 +41,13 @@
 
 @keyframes pulse {
   0%, 100% {
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
     transform: scale(1);
   }
   50% {
-    box-shadow: 0 4px 24px rgba(102, 126, 234, 0.8),
-                0 0 0 8px rgba(102, 126, 234, 0.2),
-                0 0 0 16px rgba(102, 126, 234, 0.1);
+    box-shadow: 0 4px 24px rgba(255, 255, 255, 0.3),
+                0 0 0 8px rgba(255, 255, 255, 0.1),
+                0 0 0 16px rgba(255, 255, 255, 0.05);
     transform: scale(1.05);
   }
 }

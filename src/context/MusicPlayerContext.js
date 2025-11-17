@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import useAudioPlayer from '../hooks/useAudioPlayer';
 import usePlaylist from '../hooks/usePlaylist';
 import useLocalStorage from '../hooks/useLocalStorage';
+import { resolveStreamUrl } from '../services/soundcloudApi';
 
 /**
  * MusicPlayerContext - Manages global music player state
@@ -40,17 +41,34 @@ export const MusicPlayerProvider = ({ children, fetchPlaylistFn }) => {
 
   // Sync audio when current track changes
   useEffect(() => {
-    if (playlistHook.currentTrack?.audioUrl) {
-      audioPlayer.loadTrack(playlistHook.currentTrack.audioUrl);
-    }
-  }, [playlistHook.currentTrack?.id, audioPlayer, playlistHook.currentTrack?.audioUrl]);
+    const loadTrack = async () => {
+      if (!playlistHook.currentTrack) return;
+
+      try {
+        // Resolve the actual stream URL from SoundCloud
+        const streamUrl = await resolveStreamUrl(playlistHook.currentTrack);
+
+        if (streamUrl) {
+          audioPlayer.loadTrack(streamUrl);
+        } else {
+          console.error('Failed to resolve stream URL for track:', playlistHook.currentTrack.title);
+        }
+      } catch (error) {
+        console.error('Error loading track:', error);
+      }
+    };
+
+    loadTrack();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [playlistHook.currentTrack?.id, audioPlayer.loadTrack]);
 
   // Auto-play next track when current track ends
   useEffect(() => {
     if (!audioPlayer.isPlaying && audioPlayer.currentTime === audioPlayer.duration && audioPlayer.duration > 0) {
       playlistHook.playNext();
     }
-  }, [audioPlayer.isPlaying, audioPlayer.currentTime, audioPlayer.duration, playlistHook]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [audioPlayer.isPlaying, audioPlayer.currentTime, audioPlayer.duration, playlistHook.playNext]);
 
   // Handle mute state
   const toggleMute = useCallback(() => {

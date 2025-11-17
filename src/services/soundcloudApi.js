@@ -1,15 +1,10 @@
 /**
  * SoundCloud API Service
- * Handles fetching tracks from SoundCloud
- *
- * SETUP REQUIRED:
- * 1. Go to https://developers.soundcloud.com
- * 2. Create an app and get your Client ID
- * 3. Add to .env: REACT_APP_SOUNDCLOUD_CLIENT_ID=your_client_id
+ * Uses proxy server to handle OAuth2 and bypass CORS
  */
 
-const SOUNDCLOUD_API_BASE = 'https://api.soundcloud.com';
-const CLIENT_ID = process.env.REACT_APP_SOUNDCLOUD_CLIENT_ID;
+// Proxy server base URL
+const PROXY_BASE = process.env.REACT_APP_PROXY_URL || 'http://localhost:3001';
 
 // Genre-to-Query Mapping for study/work music
 const GENRE_QUERIES = {
@@ -43,48 +38,29 @@ const GENRE_QUERIES = {
   ]
 };
 
-// Fallback: Try to extract client ID from SoundCloud widget (public method)
-let extractedClientId = null;
-
 /**
- * Extract client ID from SoundCloud widget script (fallback method)
- * This is a workaround when you don't have official API access
+ * Get playable stream URL from SoundCloud track
+ * Uses proxy server to resolve with proper authentication
  */
-const extractClientIdFromWidget = async () => {
-  if (extractedClientId) return extractedClientId;
-
+export const resolveStreamUrl = async (trackData) => {
   try {
-    const response = await fetch('https://widget.soundcloud.com/widget-v2.json');
-    const data = await response.json();
+    // Use the proxy server to resolve the stream URL
+    // This handles both stream_url and media.transcodings cases
+    const response = await fetch(`${PROXY_BASE}/api/soundcloud-resolve?trackId=${trackData.id}`);
 
-    // Try to find client_id in widget data
-    if (data?.client_id) {
-      extractedClientId = data.client_id;
-      return extractedClientId;
-    }
-
-    // Alternative: fetch a SoundCloud page and extract from script
-    const pageResponse = await fetch('https://soundcloud.com');
-    const html = await pageResponse.text();
-    const match = html.match(/"client_id":"([^"]+)"/);
-
-    if (match && match[1]) {
-      extractedClientId = match[1];
-      return extractedClientId;
+    if (response.ok) {
+      const data = await response.json();
+      console.log('Resolved stream URL for track:', trackData.title);
+      return data.url;
+    } else {
+      const error = await response.json().catch(() => ({ error: 'Unknown error' }));
+      console.error('Failed to resolve stream URL:', error);
+      return null;
     }
   } catch (error) {
-    console.error('Failed to extract SoundCloud client ID:', error);
+    console.error('Error resolving stream URL for track:', trackData.title, error);
+    return null;
   }
-
-  return null;
-};
-
-/**
- * Get client ID (from env or extracted)
- */
-const getClientId = async () => {
-  if (CLIENT_ID) return CLIENT_ID;
-  return await extractClientIdFromWidget();
 };
 
 /**
@@ -95,53 +71,46 @@ const getClientId = async () => {
  * @returns {Promise<Array>} Array of track objects
  */
 export const searchSoundCloudTracks = async (query = '', genre = 'rock', limit = 50) => {
-  try {
-    const clientId = await getClientId();
+  // Build search query for API v1
+  const searchParams = new URLSearchParams({
+    q: query + (genre ? ` ${genre}` : ''),
+    limit: limit.toString(),
+    linked_partitioning: '1',
+  });
 
-    if (!clientId) {
-      throw new Error('SoundCloud Client ID not configured. Please add REACT_APP_SOUNDCLOUD_CLIENT_ID to .env');
-    }
+  // Use proxy server to make the request
+  const response = await fetch(`${PROXY_BASE}/api/soundcloud/tracks?${searchParams}`);
 
-    // Build search query
-    const searchParams = new URLSearchParams({
-      q: query,
-      genres: genre,
-      limit: limit.toString(),
-      linked_partitioning: '1',
-      client_id: clientId,
-    });
-
-    const response = await fetch(`${SOUNDCLOUD_API_BASE}/tracks?${searchParams}`);
-
-    if (!response.ok) {
-      throw new Error(`SoundCloud API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    const tracks = data.collection || [];
-
-    // Transform to our app's format
-    return tracks
-      .filter(track => track.streamable && track.stream_url) // Only streamable tracks
-      .map(track => ({
-        id: track.id.toString(),
-        title: track.title,
-        artist: track.user?.username || 'Unknown Artist',
-        album: track.genre || 'SoundCloud',
-        duration: Math.floor(track.duration / 1000), // Convert ms to seconds
-        audioUrl: `${track.stream_url}?client_id=${clientId}`,
-        coverUrl: track.artwork_url || track.user?.avatar_url || 'https://via.placeholder.com/400',
-        year: new Date(track.created_at).getFullYear(),
-        genre: track.genre || 'Unknown',
-        description: track.description,
-        playbackCount: track.playback_count,
-        likesCount: track.likes_count,
-        permalink: track.permalink_url,
-      }));
-  } catch (error) {
-    console.error('SoundCloud API error:', error);
-    throw error;
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Unknown error' }));
+    throw new Error(`SoundCloud API error: ${response.status} ${error.error || response.statusText}`);
   }
+
+  const data = await response.json();
+  const tracks = Array.isArray(data) ? data : (data.collection || []);
+
+  // Transform to our app's format
+  // Note: We store the track reference and resolve stream URLs lazily when needed
+  return tracks
+    .filter(track => track.streamable || track.media?.transcodings?.length > 0) // Only streamable tracks
+    .map(track => ({
+      id: track.id.toString(),
+      title: track.title,
+      artist: track.user?.username || 'Unknown Artist',
+      album: track.genre || 'SoundCloud',
+      duration: Math.floor(track.duration / 1000), // Convert ms to seconds
+      // Store a placeholder - we'll resolve actual stream URL when playing
+      audioUrl: track.stream_url || 'pending',
+      coverUrl: track.artwork_url || track.user?.avatar_url || 'https://via.placeholder.com/400',
+      year: track.created_at ? new Date(track.created_at).getFullYear() : new Date().getFullYear(),
+      genre: track.genre || 'Unknown',
+      description: track.description,
+      playbackCount: track.playback_count,
+      likesCount: track.likes_count,
+      permalink: track.permalink_url,
+      // Store raw track data for stream URL resolution
+      _rawTrack: track,
+    }));
 };
 
 /**
@@ -192,58 +161,35 @@ export const getConcentrationHardRock = async () => {
  * @returns {Promise<Array>} Array of track objects (top 50)
  */
 export const fetchPlaylistByGenre = async (genre) => {
-  try {
-    const clientId = await getClientId();
+  const queries = GENRE_QUERIES[genre] || GENRE_QUERIES['lofi'];
+  const allTracks = [];
 
-    // If no client ID, fall back to mock data
-    if (!clientId) {
-      console.warn('No SoundCloud client ID found. Using mock data.');
-      // TODO: Remove after SoundCloud API configured
-      const { getMockPlaylistByGenre } = await import('../data/mockPlaylists');
-      return getMockPlaylistByGenre(genre);
-    }
-
-    const queries = GENRE_QUERIES[genre] || GENRE_QUERIES['lofi'];
-    const allTracks = [];
-
-    // Execute parallel searches for each genre's query terms
-    const searchPromises = queries.map(query =>
-      searchSoundCloudTracks(query, '', 20).catch(err => {
-        console.warn(`Failed to fetch "${query}":`, err);
-        return [];
-      })
-    );
-
-    const results = await Promise.all(searchPromises);
-    results.forEach(tracks => allTracks.push(...tracks));
-
-    // Filter out tracks with unavailable streams
-    const validTracks = allTracks.filter(track => track.audioUrl);
-
-    // Remove duplicates by ID
-    const uniqueTracks = Array.from(
-      new Map(validTracks.map(track => [track.id, track])).values()
-    );
-
-    // Sort by play count (popularity)
-    const sortedTracks = uniqueTracks.sort(
-      (a, b) => (b.playbackCount || 0) - (a.playbackCount || 0)
-    );
-
-    // Return top 50 unique tracks
-    return sortedTracks.slice(0, 50);
-
-  } catch (error) {
-    console.error(`Failed to fetch playlist for genre "${genre}":`, error);
-    // Fall back to mock data on error
-    try {
-      const { getMockPlaylistByGenre } = await import('../data/mockPlaylists');
-      return getMockPlaylistByGenre(genre);
-    } catch (fallbackError) {
-      console.error('Mock data fallback failed:', fallbackError);
+  // Execute parallel searches for each genre's query terms
+  const searchPromises = queries.map(query =>
+    searchSoundCloudTracks(query, '', 20).catch(err => {
+      console.warn(`Failed to fetch "${query}":`, err);
       return [];
-    }
-  }
+    })
+  );
+
+  const results = await Promise.all(searchPromises);
+  results.forEach(tracks => allTracks.push(...tracks));
+
+  // Filter out tracks with unavailable streams
+  const validTracks = allTracks.filter(track => track.audioUrl);
+
+  // Remove duplicates by ID
+  const uniqueTracks = Array.from(
+    new Map(validTracks.map(track => [track.id, track])).values()
+  );
+
+  // Sort by play count (popularity)
+  const sortedTracks = uniqueTracks.sort(
+    (a, b) => (b.playbackCount || 0) - (a.playbackCount || 0)
+  );
+
+  // Return top 50 unique tracks
+  return sortedTracks.slice(0, 50);
 };
 
 /**
@@ -252,48 +198,41 @@ export const fetchPlaylistByGenre = async (genre) => {
  * @returns {Promise<Object>} Track object
  */
 export const getSoundCloudTrack = async (trackId) => {
-  try {
-    const clientId = await getClientId();
+  const response = await fetch(`${PROXY_BASE}/api/soundcloud/tracks/${trackId}`);
 
-    if (!clientId) {
-      throw new Error('SoundCloud Client ID not configured');
-    }
-
-    const response = await fetch(
-      `${SOUNDCLOUD_API_BASE}/tracks/${trackId}?client_id=${clientId}`
-    );
-
-    if (!response.ok) {
-      throw new Error(`SoundCloud API error: ${response.status}`);
-    }
-
-    const track = await response.json();
-
-    return {
-      id: track.id.toString(),
-      title: track.title,
-      artist: track.user?.username || 'Unknown Artist',
-      album: track.genre || 'SoundCloud',
-      duration: Math.floor(track.duration / 1000),
-      audioUrl: `${track.stream_url}?client_id=${clientId}`,
-      coverUrl: track.artwork_url || track.user?.avatar_url,
-      year: new Date(track.created_at).getFullYear(),
-      genre: track.genre || 'Unknown',
-    };
-  } catch (error) {
-    console.error('Failed to get SoundCloud track:', error);
-    throw error;
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Unknown error' }));
+    throw new Error(`SoundCloud API error: ${response.status} ${error.error || response.statusText}`);
   }
+
+  const track = await response.json();
+
+  return {
+    id: track.id.toString(),
+    title: track.title,
+    artist: track.user?.username || 'Unknown Artist',
+    album: track.genre || 'SoundCloud',
+    duration: Math.floor(track.duration / 1000),
+    audioUrl: track.stream_url || 'pending',
+    coverUrl: track.artwork_url || track.user?.avatar_url,
+    year: track.created_at ? new Date(track.created_at).getFullYear() : new Date().getFullYear(),
+    genre: track.genre || 'Unknown',
+    _rawTrack: track,
+  };
 };
 
 /**
- * Check if SoundCloud API is configured
+ * Check if SoundCloud API is configured (check if proxy is available)
  * @returns {Promise<boolean>}
  */
 export const isSoundCloudConfigured = async () => {
   try {
-    const clientId = await getClientId();
-    return !!clientId;
+    const response = await fetch(`${PROXY_BASE}/api/health`);
+    if (response.ok) {
+      const data = await response.json();
+      return data.authenticated;
+    }
+    return false;
   } catch {
     return false;
   }

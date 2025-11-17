@@ -15,12 +15,13 @@ function PlayerDetails() {
     error,
   } = useMusicPlayer();
 
-  // Get album image
+  // Get high-quality album image
   const getAlbumImage = () => {
     if (currentTrack?.coverUrl) {
-      return currentTrack.coverUrl;
+      // Replace small SoundCloud artwork with large version
+      return currentTrack.coverUrl.replace('-large', '-t500x500').replace('large', 't500x500');
     }
-    return "https://source.unsplash.com/featured/400x400";
+    return "https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?w=800&q=90";
   };
 
   return (

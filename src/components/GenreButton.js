@@ -63,7 +63,7 @@ const GenreButton = () => {
         aria-label={`Change genre (current: ${GENRE_NAMES[selectedGenre] || selectedGenre})`}
         title={`Current: ${GENRE_NAMES[selectedGenre] || selectedGenre}`}
       >
-        {/* Settings/filter icon */}
+        {/* Headphones icon */}
         <svg
           width="24"
           height="24"
@@ -74,7 +74,8 @@ const GenreButton = () => {
           strokeLinecap="round"
           strokeLinejoin="round"
         >
-          <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+          <path d="M3 18v-6a9 9 0 0 1 18 0v6"></path>
+          <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path>
         </svg>
       </button>
 

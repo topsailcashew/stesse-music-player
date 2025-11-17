@@ -38,8 +38,8 @@ html, body {
 }
 
 body {
-  /* Warm gradient background similar to reference */
-  background: linear-gradient(135deg, #8B4513 0%, #6B1E3F 50%, #C71585 100%);
+  /* Dynamic gradient background - will blend with album art colors */
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
   background-attachment: fixed;
   font-family: 'Inter', 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
   color: var(--primary);
@@ -47,6 +47,7 @@ body {
   align-items: center;
   justify-content: center;
   min-height: 100vh;
+  transition: background 1s ease;
 }
 
 /* Remove default Bootstrap container padding */
@@ -97,22 +98,38 @@ body {
   height: 100%;
   border-radius: var(--radius);
   overflow: hidden;
-  box-shadow: var(--shadow-strong);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1);
   transition: transform var(--transition), box-shadow var(--transition);
   position: relative;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
 }
 
 .album-artwork:hover {
   transform: scale(1.02);
-  box-shadow: 0 24px 72px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.15);
+}
+
+.album-artwork::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, transparent 50%, rgba(0, 0, 0, 0.1) 100%);
+  pointer-events: none;
+  z-index: 1;
 }
 
 .album-image {
   width: 100% !important;
   height: 100% !important;
   object-fit: cover;
-  border-radius: var(--radius);
+  border-radius: calc(var(--radius) - 2px);
   transition: transform 20s linear;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
 }
 
 /* No rotation - keep album art static */
@@ -137,6 +154,12 @@ body {
   animation: fadeIn 0.6s ease-out;
   max-width: 400px;
   width: 100%;
+  padding: 16px 20px;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
 }
 
 .artist-name {
@@ -146,6 +169,7 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.15em;
   margin-bottom: 6px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .song-title {
@@ -154,6 +178,7 @@ body {
   color: var(--primary);
   letter-spacing: 0.01em;
   line-height: 1.4;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 @keyframes fadeIn {
@@ -171,6 +196,12 @@ body {
 .minimal-seeker {
   width: 100%;
   max-width: 400px;
+  padding: 16px 20px;
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(20px);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
 }
 
 .seeker-container {
@@ -182,15 +213,15 @@ body {
 
 .seeker-bar {
   height: 4px !important;
-  background: var(--accent) !important;
+  background: rgba(255, 255, 255, 0.15) !important;
   border-radius: 2px;
   overflow: visible;
 }
 
 .seeker-bar .progress-bar {
-  background: var(--primary) !important;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 1)) !important;
   border-radius: 2px;
-  box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.4);
   position: relative;
 }
 
@@ -204,7 +235,7 @@ body {
   height: 12px;
   background: var(--primary);
   border-radius: 50%;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 2px 12px rgba(255, 255, 255, 0.5), 0 0 0 2px rgba(0, 0, 0, 0.2);
   opacity: 0;
   transition: opacity var(--transition);
 }
@@ -220,57 +251,71 @@ body {
   color: var(--primary-dim);
   font-weight: 400;
   margin-top: 8px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 /* Minimal Controls */
 .minimal-controls {
   animation: fadeIn 0.6s ease-out 0.2s backwards;
+  padding: 16px 24px;
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
 }
 
 .control-buttons {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 16px;
+  gap: 8px;
   background: none !important;
   border: none !important;
 }
 
 .control-btn {
-  background: none !important;
-  border: none !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
   color: var(--primary) !important;
   padding: 12px !important;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all var(--transition) !important;
-  opacity: 0.8;
-  box-shadow: none !important;
+  opacity: 0.9;
+  border-radius: 12px !important;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
 }
 
 .control-btn:hover {
   opacity: 1 !important;
-  transform: scale(1.1);
-  background: none !important;
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.15) !important;
   color: var(--primary) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25) !important;
 }
 
 .control-btn:active {
-  transform: scale(0.95);
+  transform: translateY(0);
 }
 
 .control-btn:focus {
-  outline: none !important;
-  box-shadow: none !important;
+  outline: 2px solid rgba(255, 255, 255, 0.3) !important;
+  outline-offset: 2px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
 }
 
 .play-btn {
   opacity: 1 !important;
+  background: rgba(255, 255, 255, 0.2) !important;
+  padding: 16px !important;
 }
 
 .play-btn:hover {
-  transform: scale(1.15) !important;
+  transform: translateY(-2px) scale(1.05) !important;
+  background: rgba(255, 255, 255, 0.25) !important;
 }
 
 /* Error Alerts */
